@@ -249,8 +249,11 @@ def save_and_rename(chosen: dict, tmdb: dict, season: int, cookie: str) -> dict:
                 continue
             new_name = f"{tmdb['title']} - S{str(season).zfill(2)}E{ep.zfill(2)}{ext}"
         if new_name != old_name:
-            quark_req("file/rename", cookie, "POST", {"pr": "ucpro", "fr": "pc"}, {"fid": it["fid"], "file_name": new_name})
-            renamed += 1
+            try:
+                quark_req("file/rename", cookie, "POST", {"pr": "ucpro", "fr": "pc"}, {"fid": it["fid"], "file_name": new_name})
+                renamed += 1
+            except Exception:
+                pass
 
     return {"status": "ok", "target_dir": target_dir, "saved_count": len(files), "renamed_count": renamed, "source_title": chosen["title"]}
 
