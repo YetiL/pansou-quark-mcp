@@ -81,6 +81,28 @@ def run_save_media(args: dict) -> dict:
         if videos:
             videos.sort(key=lambda x: x.get("size", 0), reverse=True)
             chosen["media_files"] = [videos[0]] + subs[:2]
+    else:
+        import re
+        sub_exts = {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}
+        ep_map = {}
+        subs = []
+        for f in chosen["media_files"]:
+            fname = f.get("file_name", "")
+            ext = os.path.splitext(fname)[1].lower()
+            if re.search(r"预告|花絮|先导|特辑|彩蛋|trailer|sample", fname, re.IGNORECASE):
+                continue
+            m = re.search(r"[Ss]\d{1,2}[Ee](\d{1,3})|[Ee][Pp]?(\d{1,3})|第\s*(\d{1,3})\s*[集话期]|[\[\s\-_](\d{2,3})[\]\s\-_\.]", fname)
+            ep = next((g for g in m.groups() if g), "") if m else ""
+            if not ep:
+                continue
+            ep_key = ep.zfill(2)
+            if ext in sub_exts:
+                subs.append(f)
+            else:
+                if ep_key not in ep_map or f.get("size", 0) > ep_map[ep_key].get("size", 0):
+                    ep_map[ep_key] = f
+        if ep_map:
+            chosen["media_files"] = list(ep_map.values()) + subs
     return save_and_rename(chosen, tmdb, season, cookie)
 
 
