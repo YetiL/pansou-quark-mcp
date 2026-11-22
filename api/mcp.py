@@ -80,7 +80,9 @@ def run_save_media(args: dict) -> dict:
         subs = [f for f in chosen["media_files"] if os.path.splitext(f.get("file_name", ""))[1].lower() in {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}]
         if videos:
             videos.sort(key=lambda x: x.get("size", 0), reverse=True)
-            chosen["media_files"] = [videos[0]] + subs[:2]
+            max_size = videos[0].get("size", 0)
+            mp4_same_tier = [v for v in videos if v.get("file_name", "").lower().endswith(".mp4") and v.get("size", 0) >= max_size * 0.5]
+            chosen["media_files"] = [mp4_same_tier[0] if mp4_same_tier else videos[0]] + subs[:2]
     else:
         import re
         sub_exts = {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}
