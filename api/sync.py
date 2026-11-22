@@ -232,7 +232,9 @@ def save_and_rename(chosen: dict, tmdb: dict, season: int, cookie: str) -> dict:
             time.sleep(1.2)
 
     items = quark_req("file/sort", cookie, "GET", {"pr": "ucpro", "fr": "pc", "pdir_fid": to_fid, "_page": 1, "_size": 200}).get("data", {}).get("list", [])
-    renamed = 0
+    from concurrent.futures import ThreadPoolExecutor
+
+    tasks = []
     for it in items:
         if it.get("dir"):
             continue
@@ -249,11 +251,20 @@ def save_and_rename(chosen: dict, tmdb: dict, season: int, cookie: str) -> dict:
                 continue
             new_name = f"{tmdb['title']} - S{str(season).zfill(2)}E{ep.zfill(2)}{ext}"
         if new_name != old_name:
-            try:
-                quark_req("file/rename", cookie, "POST", {"pr": "ucpro", "fr": "pc"}, {"fid": it["fid"], "file_name": new_name})
-                renamed += 1
-            except Exception:
-                pass
+            tasks.append((it["fid"], new_name))
+
+    def _do_rename(pair):
+        fid, name = pair
+        try:
+            quark_req("file/rename", cookie, "POST", {"pr": "ucpro", "fr": "pc"}, {"fid": fid, "file_name": name})
+            return 1
+        except Exception:
+            return 0
+
+    renamed = 0
+    if tasks:
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            renamed = sum(pool.map(_do_rename, tasks))
 
     return {"status": "ok", "target_dir": target_dir, "saved_count": len(files), "renamed_count": renamed, "source_title": chosen["title"]}
 
