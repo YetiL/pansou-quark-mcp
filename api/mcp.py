@@ -43,10 +43,12 @@ def run_save_media(args: dict) -> dict:
     raw_candidates = search_pansou(pansou_url, query, prefer, exclude)
 
     alive = []
+    errors = []
     for c in raw_candidates[:8]:
         try:
             stoken = get_stoken(c["pwd_id"], c["passcode"], cookie)
             if not stoken:
+                errors.append(f"{c['pwd_id']}: empty stoken")
                 continue
             media_files = collect_media_files(c["pwd_id"], stoken, cookie)
             if media_files:
@@ -57,13 +59,16 @@ def run_save_media(args: dict) -> dict:
                 alive.append(c)
                 if len(alive) >= 5:
                     break
+            else:
+                errors.append(f"{c['pwd_id']}: no media files")
         except PermissionError:
             raise
-        except Exception:
+        except Exception as e:
+            errors.append(f"{c['pwd_id']}: {e}")
             continue
 
     if not alive:
-        return {"status": "error", "message": f"未找到 '{query}' 的有效夸克资源"}
+        return {"status": "error", "message": f"未找到 '{query}' 的有效夸克资源", "raw_count": len(raw_candidates), "errors": errors[:3]}
 
     best_idx = select_best_with_llm(query, tmdb, alive)
     return save_and_rename(alive[best_idx], tmdb, season, cookie)
