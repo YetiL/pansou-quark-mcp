@@ -61,8 +61,11 @@ def run_save_media(args: dict) -> dict:
                     break
             else:
                 errors.append(f"{c['pwd_id']}: no media files")
-        except PermissionError:
-            raise
+        except PermissionError as e:
+            if "Cookie" in str(e):
+                raise
+            errors.append(f"{c['pwd_id']}: {e}")
+            continue
         except Exception as e:
             errors.append(f"{c['pwd_id']}: {e}")
             continue
