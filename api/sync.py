@@ -158,7 +158,7 @@ def search_pansou(pansou_url: str, query: str, prefer: list, exclude: list) -> l
 # ---------------- Quark API ----------------
 def quark_req(path: str, cookie: str, method: str = "GET", params: dict = None, body: dict = None) -> dict:
     hdrs = QUARK_HEADERS.copy()
-    hdrs["Cookie"] = cookie.replace("\r", "").replace("\n", "").strip()
+    hdrs["Cookie"] = cookie.replace("\\r", "").replace("\\n", "").replace("\r", "").replace("\n", "").strip()
     url = f"https://drive-pc.quark.cn/1/clouddrive/{path}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
