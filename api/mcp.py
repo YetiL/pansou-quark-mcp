@@ -36,8 +36,8 @@ def run_save_media(args: dict) -> dict:
     season = int(args.get("season", 1))
     cookie = os.environ.get("QUARK_COOKIE", "")
     pansou_url = os.environ.get("PANSOU_URL", "")
-    prefer_raw = os.environ.get("PREFER_KEYWORDS") or "4K,2160p,HDR,杜比视界,DoVi,WEB-DL,高码率,HQ,MP4,简繁,内封"
-    exclude_raw = os.environ.get("EXCLUDE_KEYWORDS") or "枪版,TC,TS,CAM,HDRip,删减,预告"
+    prefer_raw = os.environ.get("PREFER_KEYWORDS") or "WEB-DL,4K,2160p,1080p,MP4,HDR,高码率,HQ,简繁,内封"
+    exclude_raw = os.environ.get("EXCLUDE_KEYWORDS") or "枪版,TC,TS,CAM,HDRip,删减,预告,REMUX,原盘,BDMV,ISO"
     prefer = [x.strip() for x in prefer_raw.split(",") if x.strip()]
     exclude = [x.strip() for x in exclude_raw.split(",") if x.strip()]
 
@@ -81,10 +81,13 @@ def run_save_media(args: dict) -> dict:
         videos = [f for f in chosen["media_files"] if os.path.splitext(f.get("file_name", ""))[1].lower() not in {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}]
         subs = [f for f in chosen["media_files"] if os.path.splitext(f.get("file_name", ""))[1].lower() in {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}]
         if videos:
-            videos.sort(key=lambda x: x.get("size", 0), reverse=True)
-            max_size = videos[0].get("size", 0)
-            mp4_same_tier = [v for v in videos if v.get("file_name", "").lower().endswith(".mp4") and v.get("size", 0) >= max_size * 0.5]
-            chosen["media_files"] = [mp4_same_tier[0] if mp4_same_tier else videos[0]] + subs[:2]
+            # MacBook/iPhone 甜点体积：优先 3GB~25GB 的高画质正片（避免 40GB+ 原盘导致 302 卡顿或触发转码）
+            sweet_spot = [v for v in videos if 3 * 1024**3 <= v.get("size", 0) <= 25 * 1024**3]
+            pool = sweet_spot if sweet_spot else videos
+            pool.sort(key=lambda x: x.get("size", 0), reverse=True)
+            max_size = pool[0].get("size", 0)
+            mp4_same_tier = [v for v in pool if v.get("file_name", "").lower().endswith(".mp4") and v.get("size", 0) >= max_size * 0.5]
+            chosen["media_files"] = [mp4_same_tier[0] if mp4_same_tier else pool[0]] + subs[:2]
     else:
         import re
         sub_exts = {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}

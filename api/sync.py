@@ -83,7 +83,7 @@ def select_best_with_llm(user_text: str, tmdb: dict, alive_candidates: list) -> 
         f"用户需求：{user_text}\n"
         f"TMDB目标：{tmdb['title']} ({tmdb['year']}) 类型:{tmdb['type']}\n"
         f"候选资源：{json.dumps(compact, ensure_ascii=False)}\n"
-        f"选出最匹配且画质最优的一个（排除合集、同名错片；最起码优先保证 4K/2160p 高画质，在同画质下优先选 .mp4 封装），仅返回 JSON：{{\"index\": 0}}"
+        f"选出最匹配且适合 MacBook/iPhone 302 直链播放的一个（排除合集、同名错片、40GB+原盘/REMUX；优先 4K WEB-DL 或高码率 1080p，优先 .mp4 封装），仅返回 JSON：{{\"index\": 0}}"
     )
     try:
         res = call_llm(prompt)
