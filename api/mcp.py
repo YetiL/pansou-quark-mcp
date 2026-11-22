@@ -36,8 +36,10 @@ def run_save_media(args: dict) -> dict:
     season = int(args.get("season", 1))
     cookie = os.environ.get("QUARK_COOKIE", "")
     pansou_url = os.environ.get("PANSOU_URL", "")
-    prefer = [x.strip() for x in os.environ.get("PREFER_KEYWORDS", "").split(",") if x.strip()]
-    exclude = [x.strip() for x in os.environ.get("EXCLUDE_KEYWORDS", "").split(",") if x.strip()]
+    prefer_raw = os.environ.get("PREFER_KEYWORDS") or "4K,2160p,HDR,杜比视界,DoVi,WEB-DL,高码率,HQ,MP4,简繁,内封"
+    exclude_raw = os.environ.get("EXCLUDE_KEYWORDS") or "枪版,TC,TS,CAM,HDRip,删减,预告"
+    prefer = [x.strip() for x in prefer_raw.split(",") if x.strip()]
+    exclude = [x.strip() for x in exclude_raw.split(",") if x.strip()]
 
     tmdb = fetch_tmdb_info(query, mtype, os.environ.get("TMDB_API_KEY", ""))
     raw_candidates = search_pansou(pansou_url, query, prefer, exclude)
