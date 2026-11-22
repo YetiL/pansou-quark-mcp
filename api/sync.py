@@ -53,7 +53,8 @@ def call_llm(prompt: str) -> dict:
         },
         timeout=20,
     )
-    content = res["choices"][0]["message"]["content"]
+    content = res["choices"][0]["message"].get("content") or "{}"
+    content = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip(), flags=re.IGNORECASE)
     return json.loads(content)
 
 
@@ -84,9 +85,12 @@ def select_best_with_llm(user_text: str, tmdb: dict, alive_candidates: list) -> 
         f"候选资源：{json.dumps(compact, ensure_ascii=False)}\n"
         f"选出最匹配且画质/版本最优的一个（排除合集、同名错片），仅返回 JSON：{{\"index\": 0}}"
     )
-    res = call_llm(prompt)
-    idx = int(res.get("index", 0))
-    return idx if 0 <= idx < len(alive_candidates) else 0
+    try:
+        res = call_llm(prompt)
+        idx = int(res.get("index", 0))
+        return idx if 0 <= idx < len(alive_candidates) else 0
+    except Exception:
+        return 0
 
 
 # ---------------- TMDB & Pansou ----------------
