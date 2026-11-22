@@ -229,7 +229,7 @@ def save_and_rename(chosen: dict, tmdb: dict, season: int, cookie: str) -> dict:
             t = quark_req("task", cookie, "GET", {"pr": "ucpro", "fr": "pc", "task_id": task_id, "retry_index": 0})
             if t.get("data", {}).get("status") == 2:
                 break
-            time.sleep(1.2)
+            time.sleep(0.4)
 
     items = quark_req("file/sort", cookie, "GET", {"pr": "ucpro", "fr": "pc", "pdir_fid": to_fid, "_page": 1, "_size": 200}).get("data", {}).get("list", [])
     from concurrent.futures import ThreadPoolExecutor
