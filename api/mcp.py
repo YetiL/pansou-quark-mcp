@@ -74,7 +74,14 @@ def run_save_media(args: dict) -> dict:
         return {"status": "error", "message": f"未找到 '{query}' 的有效夸克资源", "raw_count": len(raw_candidates), "errors": errors[:3]}
 
     best_idx = select_best_with_llm(query, tmdb, alive)
-    return save_and_rename(alive[best_idx], tmdb, season, cookie)
+    chosen = alive[best_idx]
+    if tmdb["type"] == "movie":
+        videos = [f for f in chosen["media_files"] if os.path.splitext(f.get("file_name", ""))[1].lower() not in {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}]
+        subs = [f for f in chosen["media_files"] if os.path.splitext(f.get("file_name", ""))[1].lower() in {".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"}]
+        if videos:
+            videos.sort(key=lambda x: x.get("size", 0), reverse=True)
+            chosen["media_files"] = [videos[0]] + subs[:2]
+    return save_and_rename(chosen, tmdb, season, cookie)
 
 
 class handler(BaseHTTPRequestHandler):
