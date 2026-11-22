@@ -76,6 +76,9 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
+    def do_GET(self):
+        return self._send(200, {"status": "ok", "service": "pansou-quark-mcp"})
+
     def do_POST(self):
         secret = os.environ.get("API_SECRET", "")
         if secret and self.headers.get("Authorization") != f"Bearer {secret}":
@@ -104,12 +107,19 @@ class handler(BaseHTTPRequestHandler):
                 name = params.get("name")
                 if name != "save_media_to_quark":
                     return self._send(200, {"jsonrpc": "2.0", "id": rpc_id, "error": {"code": -32601, "message": "Unknown tool"}})
-                res = run_save_media(params.get("arguments", {}))
-                return self._send(200, {
-                    "jsonrpc": "2.0",
-                    "id": rpc_id,
-                    "result": {"content": [{"type": "text", "text": json.dumps(res, ensure_ascii=False)}]},
-                })
+                try:
+                    res = run_save_media(params.get("arguments", {}))
+                    return self._send(200, {
+                        "jsonrpc": "2.0",
+                        "id": rpc_id,
+                        "result": {"content": [{"type": "text", "text": json.dumps(res, ensure_ascii=False)}]},
+                    })
+                except Exception as tool_err:
+                    return self._send(200, {
+                        "jsonrpc": "2.0",
+                        "id": rpc_id,
+                        "result": {"isError": True, "content": [{"type": "text", "text": str(tool_err)}]},
+                    })
 
             return self._send(200, {"jsonrpc": "2.0", "id": rpc_id, "result": {}})
         except Exception as e:
